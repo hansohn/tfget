@@ -25,6 +25,12 @@ jobs:
           GITHUB_REF_TYPE:  ${GITHUB_REF_TYPE}
           GITHUB_REF_NAME:  ${GITHUB_REF_NAME}
           EOF
+      - name: Terraform Pre-exist check
+        run: |
+          if [[ -f /usr/local/bin/terraform ]]; then
+            echo "Terraform exists";
+            /usr/local/bin/terraform --version;
+          fi
       - name: Install Prerequisites 
         run: |
           sudo apt-get update
@@ -39,12 +45,6 @@ jobs:
           shellcheck --version
       - name: Lint
         run: make lint
-      - name: Terraform Pre-exist check
-        run: |
-          if [[ -f /usr/local/bin/terraform ]]; then
-            echo "Terraform exists";
-            /usr/local/bin/terraform --version;
-          fi
       - name: Smoke Test
         run: |
           ./tfget latest
