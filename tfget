@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+CURL='curl -fsSL --netrc-optional';
+CLEAN='false'
+LIST='false'
+SYMLINK='true'
+SYMLINK_VERSION=
+VERSIONS=
+
+# function: usage
+function usage () {
+  cat << EOF
+
+  Usage: $0 <TERRAFORM_VERSION>
+
+    -c              Clean up symlinks and temp files
+    -i              Install specified version(s) of Terraform. Multiple versions
+                    can be specified using a comma-seperated string. Example:
+                    '1.2.3,4.5.6'
+    -l              List currently installed versions
+    -p              Preinstall binary but do not symlink it after installation. 
+                    Default behavior symlinks binary to '/usr/local/bin/terraform'
+    -s              Symlink specified <version> to '/usr/local/bin/terraform' 
+
+    -h, --help      shows this help menu
+
+  This script downloads the Terraform version passed into it and symlinks the
+  binary to '/usr/local/bin/terraform'.
+EOF
+}
+
+# function: clean
+clean () {
+  if [[ -L /usr/local/bin/terraform ]]; then
+    rm -f "/usr/local/bin/terraform";
+  fi
+  find /tmp -type d -name "tf_*" -exec rm -rf {} +
+}
+
+# funtion: list
+# shellcheck disable=SC2005
+list () {
+  echo "$(find /usr/local/bin -type f -name "terraform_*" -exec basename {} \;)"
+}
+
+# function: get_latest
+# shellcheck disable=SC2005
+get_latest () {
+  echo "$(${CURL} "https://api.github.com/repos/hashicorp/terraform/releases/latest" | jq -r .tag_name  | sed -e "s:^v::")"
+}
+
+# function: get_tf
+get_tf () {
+  local version=$1
+
+  # download and extract
+  if [[ ! -f  "/usr/local/bin/terraform_${version}" ]]; then
+    echo "==> Installing Terraform version ${version}";
+    temp="/tmp/tf_${version}";
+    mkdir -p "${temp}";
+    if [[ ! -f ${temp}/terraform_${version}.zip ]]; then
+      echo "Downloading https://releases.hashicorp.com/terraform/${version}/terraform_${version}_linux_amd64.zip to /terraform_${version}.zip";
+      echo "Downloading ...";
+      ${CURL} "https://releases.hashicorp.com/terraform/${version}/terraform_${version}_linux_amd64.zip" \
+        -o "${temp}/terraform_${version}.zip";
+    fi
+    if [[ ! -f "${temp}/terraform" ]]; then
+      unzip -qq "${temp}/terraform_${version}.zip" -d "${temp}/";
+      chmod +x "${temp}/terraform";
+    fi
+    mv "${temp}/terraform" "/usr/local/bin/terraform_${version}";
+    rm -rf "${temp}";
+    echo "Installed Terraform version ${version}"
+  fi
+}
+
+# function: symlink_tf
+# shellcheck disable=SC2181
+symlink_tf () {
+  local version=$1
+
+  # symlink
+  echo "==> Linking '/usr/local/bin/terraform_${version}' --> '/usr/local/bin/terraform'";
+  if [[ -e /usr/local/bin/terraform ]] && [[ ! -L /usr/local/bin/terraform ]]; then
+    echo "==> ERROR: '/usr/local/bin/terraform' exists and is not a symlink";
+    exit 1;
+  fi
+  ln -sf "/usr/local/bin/terraform_${version}" /usr/local/bin/terraform;
+  [ $? -eq 0 ] && echo "Switched terraform to version \"${version}\""
+}
+
+# function: mk_dotfles
+mk_dotfiles () {
+  # dotfiles
+  if [[ ! -d "${HOME}/.terraform.d/plugin-cache" ]]; then
+    mkdir -p "${HOME}/.terraform.d/plugin-cache";
+  fi
+}
+
+# function: main
+main () {
+  local versions=("$@")
+
+  for version in "${versions[@]}"; do
+    # if latest get latest tf version
+    if [[ "${version}" == "latest" ]]; then
+      version=$(get_latest)
+    fi
+
+    # download tf version
+    get_tf "${version}"
+
+    # symlink tf version
+    if ${SYMLINK}; then
+      if [[ -n ${SYMLINK_VERSION} ]]; then
+        if [[ "${SYMLINK_VERSION}" == "${version}" ]]; then
+          symlink_tf "${version}";
+        else
+          :
+        fi
+      elif [[ "${#versions[@]}" -le "1" ]] || { [[ "${#versions[@]}" -gt "1" ]] && [[ "${versions[-1]}" == "${version}" ]]; }; then
+        symlink_tf "${version}";
+      fi
+    fi
+  done
+
+  # make dotfiles
+  mk_dotfiles
+}
+
+# handle arguements
+while getopts ":i:s:clph" FLAG; do
+  case $FLAG in
+    i)
+      VERSIONS=$OPTARG
+      ;;
+    s)
+      SYMLINK_VERSION=$OPTARG
+      ;;
+    c)
+      CLEAN='true'
+      ;;
+    l)
+      LIST='true'
+      ;;
+    p)
+      SYMLINK='false'
+      ;;
+    h)
+      usage;
+      exit 0;
+      ;;
+    *)
+      usage;
+      exit 0;
+      ;;
+  esac
+done
+shift $((OPTIND-1))
+
+TERRAFORM_VERSION=${TERRAFORM_VERSION:-$@}
+IFS=', ' read -r -a TERRAFORM_VERSIONS <<< "$VERSIONS$TERRAFORM_VERSION"
+
+if ${CLEAN}; then
+  clean;
+elif ${LIST}; then
+  list;
+elif [[ "${#TERRAFORM_VERSIONS[@]}" == "0" ]] && [[ -z $TERRAFORM_VERSION ]]; then
+  usage;
+  exit 0;
+elif [[ "${#TERRAFORM_VERSIONS[@]}" -ge "1" ]]; then
+  main "${TERRAFORM_VERSIONS[@]}";
+# else
+#   main "${TERRAFORM_VERSION}";
+fi
