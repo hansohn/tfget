@@ -9,8 +9,8 @@ ARG TERRAFORM_VERSION=latest
 ARG TERRAGRUNT_VERSION=latest
 ARG TFLINT_VERSION=latest
 ARG TFSEC_VERSION=latest
-COPY docker/dotfiles/. /root/
-COPY tfget /usr/local/bin/
+COPY ./docker/dotfiles/. /root/
+COPY ./tfget /usr/local/bin/
 ENV CURL='curl -fsSL --netrc-optional'
 RUN apt-get update && apt-get install --no-install-recommends -y \
       bash \
@@ -23,9 +23,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # shellcheck
 RUN /bin/bash -c 'if [[ "${SHELLCHECK_VERSION}" == "latest" ]]; then SHELLCHECK_VERSION=$(${CURL} "https://api.github.com/repos/koalaman/shellcheck/releases/latest" | jq -r .tag_name); fi \
-      && ${CURL} https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz -o shellcheck.tar.xv \
+      && ${CURL} https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz -o shellcheck.tar.xv \
       && tar -xvf shellcheck.tar.xv \
-      && mv shellcheck-v${SHELLCHECK_VERSION}/shellcheck /usr/local/bin/ \
+      && mv shellcheck-${SHELLCHECK_VERSION}/shellcheck /usr/local/bin/ \
       && chmod +x /usr/local/bin/shellcheck \
       && shellcheck --version'
 

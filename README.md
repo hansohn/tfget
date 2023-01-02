@@ -33,7 +33,7 @@ binaries and symlinks them to /usr/local/bin/terraform.
 ```
 $ tfget --help
 
-  Usage: tfget <TERRAFORM_VERSION>
+  Usage: /usr/local/bin/tfget <TERRAFORM_VERSION>
 
     -c              Clean up symlinks and temp files
     -i              Install specified version(s) of Terraform. Multiple versions
@@ -69,4 +69,6 @@ Available targets:
   help                                Help screen
   help/all                            Display help for all targets
   help/short                          This help short screen
+  lint                                Run all linters, validators, and security analyzers
+  lint/shellcheck                     Bash linter
 ```

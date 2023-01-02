@@ -11,16 +11,29 @@ PROJECT_PATH ?= $(shell 'pwd')
 include $(PROJECT_PATH)/Makefile.*
 
 REPO_NAME ?= $(shell basename $(CURDIR))
+SRC := tfget
 
 #-------------------------------------------------------------------------------
-# terraform
+# lint
 #-------------------------------------------------------------------------------
 
-TERRAFORM_VERSION ?= latest
-TERRAGRUNT_VERSION ?= latest
-TERRAFORM_DOCS_VERSION ?= latest
-TFLINT_VERSION ?= latest
-TFSEC_VERSION ?= latest
+# -- shellcheck --
+## Bash linter
+lint/shellcheck: $(SRC)
+	-@if shellcheck --version > /dev/null 2>&1; then \
+		for i in $(^); do \
+			echo "[INFO] running shellcheck on: [$$i]"; \
+			shellcheck \
+				"$$i"; \
+		done; \
+	else \
+		echo "[ERROR] Shellcheck 'lint' failed. Shellcheck binary is misisng."; \
+	fi
+.PHONY: lint/shellcheck
+
+## Run all linters, validators, and security analyzers
+lint: lint/shellcheck
+.PHONY: lint
 
 #-------------------------------------------------------------------------------
 # git
@@ -28,6 +41,17 @@ TFSEC_VERSION ?= latest
 
 GIT_BRANCH ?= $(shell git branch --show-current)
 GIT_HASH := $(shell git rev-parse --short HEAD)
+
+#-------------------------------------------------------------------------------
+# terraform
+#-------------------------------------------------------------------------------
+
+SHELLCHECK_VERSION ?= latest
+TERRAFORM_DOCS_VERSION ?= latest
+TERRAFORM_VERSION ?= latest
+TERRAGRUNT_VERSION ?= latest
+TFLINT_VERSION ?= latest
+TFSEC_VERSION ?= latest
 
 #-------------------------------------------------------------------------------
 # docker
@@ -44,14 +68,20 @@ DOCKER_TAGS += --tag $(DOCKER_TAG_BASE):latest
 DOCKER_TAGS += --tag $(DOCKER_TAG_BASE):$(TERRAFORM_VERSION)
 endif
 
-DOCKER_BUILD_PATH ?= debian
+DOCKER_BUILD_PATH ?= docker
 DOCKER_BUILD_ARGS ?=
+DOCKER_BUILD_ARGS += --build-arg SHELLCHECK_VERSION=$(SHELLCHECK_VERSION)
+DOCKER_BUILD_ARGS += --build-arg TERRAFORM_DOCS_VERSION=$(TERRAFORM_DOCS_VERSION)
 DOCKER_BUILD_ARGS += --build-arg TERRAFORM_VERSION=$(TERRAFORM_VERSION)
 DOCKER_BUILD_ARGS += --build-arg TERRAGRUNT_VERSION=$(TERRAGRUNT_VERSION)
-DOCKER_BUILD_ARGS += --build-arg TERRAFORM_DOCS_VERSION=$(TERRAFORM_DOCS_VERSION)
 DOCKER_BUILD_ARGS += --build-arg TFLINT_VERSION=$(TFLINT_VERSION)
 DOCKER_BUILD_ARGS += --build-arg TFSEC_VERSION=$(TFSEC_VERSION)
 DOCKER_BUILD_ARGS += $(DOCKER_TAGS)
+
+DOCKER_RUN_ARGS ?=
+DOCKER_RUN_ARGS += --interactive
+DOCKER_RUN_ARGS += --tty
+DOCKER_RUN_ARGS += --rm
 
 DOCKER_PUSH_ARGS ?=
 DOCKER_PUSH_ARGS += --all-tags
@@ -80,7 +110,7 @@ docker/build:
 docker/run:
 	-@if docker stats --no-stream > /dev/null 2>&1; then \
 		echo "[INFO] Running '$(DOCKER_USER)/$(DOCKER_REPO)' docker image"; \
-		docker run -it --rm "$(DOCKER_TAG_BASE):$(GIT_HASH)" bash; \
+		docker run $(DOCKER_RUN_ARGS) "$(DOCKER_TAG_BASE):$(GIT_HASH)" bash; \
 	else \
 		echo "[ERROR] Docker 'run' failed. Docker daemon is not Running."; \
 	fi

@@ -1,0 +1,45 @@
+---
+name: Bash Pipeline
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  CURL: 'curl -fsSL --netrc-optional'
+  SHELLCHECK_VERSION: latest
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      env-name: ${{ steps.env-name.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Log Git Reference Info
+        run: |
+          cat << EOF
+          GITHUB_REF:       ${GITHUB_REF}
+          GITHUB_REF_TYPE:  ${GITHUB_REF_TYPE}
+          GITHUB_REF_NAME:  ${GITHUB_REF_NAME}
+          EOF
+      - name: Install Prerequisites 
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y software-properties-common bash ca-certificates curl jq make xz-utils
+          if [[ "${SHELLCHECK_VERSION}" == "latest" ]]; then
+            SHELLCHECK_VERSION=$(${CURL} "https://api.github.com/repos/koalaman/shellcheck/releases/latest" | jq -r .tag_name);
+          fi
+          ${CURL} https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz -o shellcheck.tar.xv
+          tar -xvf shellcheck.tar.xv
+          mv shellcheck-${SHELLCHECK_VERSION}/shellcheck /usr/local/bin/
+          chmod +x /usr/local/bin/shellcheck
+          shellcheck --version
+      - name: Lint
+        run: make lint
+      - name: Smoke Test
+        run: |
+          tfget latest
+          terraform --version
