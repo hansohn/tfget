@@ -25,16 +25,12 @@ jobs:
           GITHUB_REF_TYPE:  ${GITHUB_REF_TYPE}
           GITHUB_REF_NAME:  ${GITHUB_REF_NAME}
           EOF
-      - name: Terraform Pre-exist check
-        run: |
-          if [[ -f /usr/local/bin/terraform ]]; then
-            echo "Terraform exists";
-            /usr/local/bin/terraform --version;
-          fi
-      - name: Install Prerequisites 
+      - name: Setup Environment
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y software-properties-common bash ca-certificates curl jq make xz-utils
+
+          # shellcheck
           if [[ "${SHELLCHECK_VERSION}" == "latest" ]]; then
             SHELLCHECK_VERSION=$(${CURL} "https://api.github.com/repos/koalaman/shellcheck/releases/latest" | jq -r .tag_name);
           fi
@@ -43,6 +39,11 @@ jobs:
           mv shellcheck-${SHELLCHECK_VERSION}/shellcheck /usr/local/bin/
           chmod +x /usr/local/bin/shellcheck
           shellcheck --version
+
+          # clean
+          if [[ -f /usr/local/bin/terraform ]]; then
+            rm -f /usr/local/bin/terraform;
+          fi
       - name: Lint
         run: make lint
       - name: Smoke Test
