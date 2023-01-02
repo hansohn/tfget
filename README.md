@@ -1,6 +1,6 @@
 <div align="center">
   <h3>tfget</h3>
-  <p>Terraform tool for fetching release metadata</p>
+  <p>Terraform download utility</p>
   <p>
     <!-- Build Status -->
     <a href="https://actions-badge.atrox.dev/hansohn/tfget/goto?ref=main">
@@ -24,7 +24,7 @@
 ### Description
 
 Welcome to the **tfget** repo. This bash command line utility fetches Terraform
-binaries and symlinks them to /usr/local/bin/terraform.
+binaries and symlinks them to `/usr/local/bin/terraform`.
 
 ### Usage
 
