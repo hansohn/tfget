@@ -28,9 +28,10 @@ jobs:
       - name: Log Git Reference Info
         run: |
           cat << EOF
-          GITHUB_REF:       ${GITHUB_REF}
-          GITHUB_REF_TYPE:  ${GITHUB_REF_TYPE}
-          GITHUB_REF_NAME:  ${GITHUB_REF_NAME}
+          GITHUB_EVENT_NAME:    ${GITHUB_EVENT_NAME}
+          GITHUB_REF:           ${GITHUB_REF}
+          GITHUB_REF_TYPE:      ${GITHUB_REF_TYPE}
+          GITHUB_REF_NAME:      ${GITHUB_REF_NAME}
           EOF
       - name: Setup Environment
         run: |
