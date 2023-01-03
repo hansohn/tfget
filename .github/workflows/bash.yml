@@ -31,7 +31,6 @@ jobs:
           GITHUB_REF_TYPE:      ${GITHUB_REF_TYPE}
           GITHUB_REF_NAME:      ${GITHUB_REF_NAME}
           EOF
-          echo "${{ toJSON(github) }}"
       - name: Setup Environment
         run: |
           sudo apt-get update
@@ -66,11 +65,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Package
-        run: tar -czvf tfget-${GITHUB_REF_NAME}.tar.gz tfget
+        run: tar -czvf "tfget-${GITHUB_REF_NAME}.tar.gz" ./tfget
       - name: Deploy
         uses: ncipollo/release-action@v1
         with:
-          artifacts: tfget-${GITHUB_REF_NAME}.tar.gz
+          artifacts: tfget-${{ env.GITHUB_REF_NAME }}.tar.gz
 
   slack:
     if: always()
