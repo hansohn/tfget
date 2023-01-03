@@ -59,8 +59,8 @@ jobs:
 
   deploy:
     if: >-
-      "${GITHUB_EVENT_NAME}" == "push" &&
-      "${GITHUB_REF_TYPE}" == "tag"
+      ${GITHUB_EVENT_NAME} == 'push' &&
+      ${GITHUB_REF_TYPE} == 'tag'
       # github.event_name == 'push' &&
       # github.event.ref_type == 'tag'
     needs:
