@@ -58,7 +58,7 @@ TFSEC_VERSION ?= latest
 #-------------------------------------------------------------------------------
 
 DOCKER_USER ?= hansohn
-DOCKER_REPO ?= tfget
+DOCKER_REPO ?= $(REPO_NAME)
 DOCKER_TAG_BASE ?= $(DOCKER_USER)/$(DOCKER_REPO)
 
 DOCKER_TAGS ?=

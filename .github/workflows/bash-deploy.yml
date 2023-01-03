@@ -2,10 +2,17 @@
 name: Bash Pipeline
 
 on:
-  pull_request:
+  workflow_dispatch:
   push:
     branches:
-      - main
+      - '*'
+    pull_request:
+      types:
+        - opened
+        - reopened
+        - synchronize
+    tags:
+      - 'v?[0-9]+.[0-9]+.[0-9]+'
 
 env:
   CURL: 'curl -fsSL --netrc-optional'
@@ -50,3 +57,35 @@ jobs:
         run: |
           ./tfget latest
           terraform --version
+
+  deploy:
+    if: (github.event_name == 'push' && github.ref == 'refs/tags/*')
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Package
+        run: tar -czvf tfget-${GITHUB_REF_NAME}.tar.gz tfget
+      - name: Deploy
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: tfget-${GITHUB_REF_NAME}.tar.gz
+
+  slack:
+    if: always()
+    needs:
+      - build
+      - deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Slack Notification
+        uses: Gamesight/slack-workflow-status@master
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          channel: ${{ secrets.SLACK_CHANNEL_ID }}
+          name: ${{ secrets.SLACK_USERNAME }}
+          icon_url: "https://cdn-icons-png.flaticon.com/512/25/25231.png"
