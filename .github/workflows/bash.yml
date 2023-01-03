@@ -21,8 +21,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      env-name: ${{ steps.env-name.outputs.environment }}
     steps:
       - uses: actions/checkout@v2
       - name: Log Git Reference Info
