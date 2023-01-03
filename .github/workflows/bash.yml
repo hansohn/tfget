@@ -69,7 +69,7 @@ jobs:
       - name: Deploy
         uses: ncipollo/release-action@v1
         with:
-          artifacts: tfget-${{ env.GITHUB_REF_NAME }}.tar.gz
+          artifacts: tfget-*.tar.gz
 
   slack:
     if: always()
