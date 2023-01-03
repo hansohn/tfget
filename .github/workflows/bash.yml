@@ -31,7 +31,7 @@ jobs:
           GITHUB_REF_TYPE:      ${GITHUB_REF_TYPE}
           GITHUB_REF_NAME:      ${GITHUB_REF_NAME}
           EOF
-          echo "${{ github }}"
+          echo "$GITHUB_CONTEXT"
       - name: Setup Environment
         run: |
           sudo apt-get update
