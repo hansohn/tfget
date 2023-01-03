@@ -31,6 +31,7 @@ jobs:
           GITHUB_REF_TYPE:      ${GITHUB_REF_TYPE}
           GITHUB_REF_NAME:      ${GITHUB_REF_NAME}
           EOF
+          echo "${{ github }}"
       - name: Setup Environment
         run: |
           sudo apt-get update
@@ -58,11 +59,7 @@ jobs:
           terraform --version
 
   deploy:
-    if: >-
-      ${GITHUB_EVENT_NAME} == 'push' &&
-      ${GITHUB_REF_TYPE} == 'tag'
-      # github.event_name == 'push' &&
-      # github.event.ref_type == 'tag'
+    if: github.event_name == 'push' && github.event.ref_type == 'tag'
     needs:
       - build
     runs-on: ubuntu-latest
