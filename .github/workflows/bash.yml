@@ -59,7 +59,7 @@ jobs:
           terraform --version
 
   deploy:
-    if: github.event_name == 'push' && github.event.ref_type == 'tag'
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     needs:
       - build
     runs-on: ubuntu-latest
