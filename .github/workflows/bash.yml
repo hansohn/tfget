@@ -58,22 +58,16 @@ jobs:
           terraform --version
 
   deploy:
-    # if: >-
-    #   github.event_name == 'push' &&
-    #   github.event.ref_type == 'tag'
+    if: >-
+      "${GITHUB_EVENT_NAME}" == "push" &&
+      "${GITHUB_REF_TYPE}" == "tag"
+      # github.event_name == 'push' &&
+      # github.event.ref_type == 'tag'
     needs:
       - build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Log Git Reference Info
-        run: |
-          cat << EOF
-          GITHUB_EVENT_NAME:    ${GITHUB_EVENT_NAME}
-          GITHUB_REF:           ${GITHUB_REF}
-          GITHUB_REF_TYPE:      ${GITHUB_REF_TYPE}
-          GITHUB_REF_NAME:      ${GITHUB_REF_NAME}
-          EOF
       - name: Package
         run: tar -czvf tfget-${GITHUB_REF_NAME}.tar.gz tfget
       - name: Deploy
