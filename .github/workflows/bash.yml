@@ -31,7 +31,7 @@ jobs:
           GITHUB_REF_TYPE:      ${GITHUB_REF_TYPE}
           GITHUB_REF_NAME:      ${GITHUB_REF_NAME}
           EOF
-          echo "$GITHUB_CONTEXT"
+          echo "${{ toJSON(github) }}"
       - name: Setup Environment
         run: |
           sudo apt-get update
